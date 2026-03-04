@@ -1,4 +1,4 @@
-# Algorhythmic Synthesis - アルゴリズミック・シンセシス
+# Algorhythmic Synthesis
 
 ## English Definition
 **Algorhythmic Synthesis** is a revolutionary musical genre that integrates mathematical structures (differential calculus, integral calculus, polar coordinates, complex equations, parametric equations, matrices, vectors, limits, sequences, Fibonacci sequences, Markov chains, chaos theory, Lorenz equations, partial differential equations), physical phenomena (Doppler effect, spectral analysis), and comprehensive musical history from Gregorian chant to contemporary techniques.
