@@ -264,7 +264,7 @@ end`
             Algorhythmic Synthesis Generator
           </h1>
           <p className="text-xl text-purple-200">
-            数学・物理・音楽史・芸術の統合作曲システム
+            Integrated Composition System for Mathematics, Physics, Music History, and Art
           </p>
         </div>
         
