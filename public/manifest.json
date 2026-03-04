@@ -1,0 +1,9 @@
+{
+  "name": "Algorhythmic Synthesis",
+  "short_name": "AlgoSynth",
+  "description": "Mathematical Music Composition System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#8b5cf6"
+}
