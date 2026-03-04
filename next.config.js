@@ -9,9 +9,6 @@ const nextConfig = {
     domains: [],
     formats: ['image/webp'],
   },
-  experimental: {
-    optimizeCss: true,
-  },
   poweredByHeader: false,
   compress: true,
   generateEtags: true,
