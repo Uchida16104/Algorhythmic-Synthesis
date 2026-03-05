@@ -222,7 +222,7 @@ end`
   
   const generateVoicePattern = (index: number, complexity: number): string => {
     const patterns = [
-      `notes = [60, 64, 67, 72]
+      `notes = (chord rrand_i(60, 72), chord_names[rrand(0, chord_names.length-1)])
     notes.each do |n|
       midi n, velocity: 70 + rand_i(20), sustain: 0.5
       sleep 0.5
