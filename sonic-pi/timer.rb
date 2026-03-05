@@ -5,7 +5,7 @@ set :running, true
 
 in_thread do
   while get(:running)
-    if vt - get(:start_time) > 60 # < ===== 60 is Variables(Number). (ex 120, 150, 156, 195, 210, etc... ===== >
+    if vt - get(:start_time) > 60 # < ===== 60 is Variables(Number). (ex 24, 30, 48, 60, 72, 88, 96, 112, 120, 150, 156, 195, 210, etc... ===== >
       set :running, false
       puts "Performance stopped (5 minutes reached)"
     end
