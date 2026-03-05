@@ -235,7 +235,7 @@ end`
       midi n, velocity: 75, sustain: 1.5
       sleep 0.1
     end`,
-      `(60..72).to_a.sample(${complexity}).each do |n|
+      `(60..72).to_a.sample(${complexity}) do |n|
       midi n, velocity: 60 + rand_i(30)
       sleep rrand(0.1, 0.5)
     end`
