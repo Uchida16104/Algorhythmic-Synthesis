@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Play, Download, RefreshCw } from 'lucide-react'
+import { Play, Download, RefreshCw, ExternalLink } from 'lucide-react'
 
 interface Parameters {
   mathSystem: string
@@ -23,11 +23,11 @@ export default function Generator() {
     complexity: 5,
     channels: 8
   })
-  
+
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedCode, setGeneratedCode] = useState('')
   const [visualFeedback, setVisualFeedback] = useState<string[]>([])
-  
+
   const mathSystems = [
     { id: 'fibonacci', name: 'Fibonacci Sequence', description: 'Golden ratio rhythm patterns' },
     { id: 'lorenz', name: 'Lorenz Attractor', description: 'Chaotic pitch modulation' },
@@ -35,13 +35,13 @@ export default function Generator() {
     { id: 'markov', name: 'Markov Chain', description: 'Probabilistic progressions' },
     { id: 'parametric', name: 'Parametric Equations', description: 'Geometric melodies' }
   ]
-  
+
   const physicsEffects = [
     { id: 'doppler', name: 'Doppler Effect', description: 'Frequency shifting' },
     { id: 'spectral', name: 'Spectral Analysis', description: 'Harmonic series' },
     { id: 'ringmod', name: 'Ring Modulation', description: 'Frequency multiplication' }
   ]
-  
+
   const historicalForms = [
     { id: 'organum', name: 'Medieval Organum', description: 'Parallel motion' },
     { id: 'fugue', name: 'Baroque Fugue', description: 'Contrapuntal structure' },
@@ -49,17 +49,17 @@ export default function Generator() {
     { id: 'serial', name: 'Twelve-Tone', description: 'Serial technique' },
     { id: 'minimalism', name: 'Minimalism', description: 'Phase shifting' }
   ]
-  
+
   const artMovements = [
     { id: 'impressionism', name: 'Impressionism', description: 'Color-based harmony' },
     { id: 'artdeco', name: 'Art Deco', description: 'Geometric patterns' },
     { id: 'avantgarde', name: 'Avant-garde', description: 'Experimental forms' }
   ]
-  
+
   const generateCode = () => {
     setIsGenerating(true)
     setVisualFeedback([])
-    
+
     const steps = [
       'Initializing mathematical structures...',
       'Applying physics transformations...',
@@ -69,11 +69,11 @@ export default function Generator() {
       'Compiling Sonic Pi code...',
       'Complete!'
     ]
-    
+
     steps.forEach((step, index) => {
       setTimeout(() => {
         setVisualFeedback(prev => [...prev, step])
-        
+
         if (index === steps.length - 1) {
           const code = generateSonicPiCode()
           setGeneratedCode(code)
@@ -82,10 +82,19 @@ export default function Generator() {
       }, index * 800)
     })
   }
-  
+
+  const openMermaidGenerator = () => {
+    if (typeof window !== 'undefined') {
+      if (generatedCode) {
+        sessionStorage.setItem('algorhythmic_sonic_pi_code', generatedCode)
+      }
+      window.open('/mermaid-generator.html', '_blank')
+    }
+  }
+
   const generateSonicPiCode = (): string => {
     const { mathSystem, physicsEffect, historicalForm, artMovement, tempo, complexity, channels } = parameters
-    
+
     return `# Algorhythmic Synthesis Generated Code
 # Configuration: ${mathSystem} + ${physicsEffect} + ${historicalForm} + ${artMovement}
 
@@ -105,20 +114,20 @@ ${getHistoricalCode(historicalForm)}
 ${getArtCode(artMovement)}
 
 # Main Performance (${channels} channels)
-${Array.from({length: channels}, (_, i) => `
+${Array.from({ length: channels }, (_, i) => `
 live_loop :voice_${i + 1} do
   use_midi_defaults channel: ${i + 1}
-  
+
   with_fx :reverb, room: ${(0.3 + Math.random() * 0.5).toFixed(2)} do
     ${generateVoicePattern(i, complexity)}
   end
-  
+
   sleep ${(1 + Math.random() * 3).toFixed(1)}
 end`).join('\n')}
 
 puts "Algorhythmic Synthesis: ${channels} voices active"`
   }
-  
+
   const getMathCode = (system: string): string => {
     const codes: Record<string, string> = {
       fibonacci: `define :fibonacci do |n|
@@ -156,7 +165,7 @@ end`
     }
     return codes[system] || '# Mathematical system'
   }
-  
+
   const getPhysicsCode = (effect: string): string => {
     const codes: Record<string, string> = {
       doppler: `define :doppler_shift do |freq, velocity|
@@ -171,7 +180,7 @@ end`
     }
     return codes[effect] || '# Physics effect'
   }
-  
+
   const getHistoricalCode = (form: string): string => {
     const codes: Record<string, string> = {
       organum: `define :organum_parallel do |melody|
@@ -198,7 +207,7 @@ end`
     }
     return codes[form] || '# Historical form'
   }
-  
+
   const getArtCode = (movement: string): string => {
     const codes: Record<string, string> = {
       impressionism: `impressionist_colors = [210, 180, 150, 30, 60]
@@ -219,31 +228,27 @@ end`
     }
     return codes[movement] || '# Art movement'
   }
-  
+
   const generateVoicePattern = (index: number, complexity: number): string => {
     const patterns = [
-      `notes = (chord rrand_i(60, 72), chord_names[rrand(0, chord_names.length-1)])
-    notes.each do |n|
-      midi n, velocity: 70 + rand_i(20), sustain: 0.5
-      sleep 0.5
-    end`,
-      `scale(:c, :major).each do |n|
+      `midi 60 + rand_i(12), velocity: 70 + rand_i(20), sustain: 0.5
+    sleep 0.5`,
+      `scale(:c4, :major).each do |n|
       midi n, velocity: 80, sustain: 0.25
       sleep 0.25
     end`,
-      `chord(:c, :major7).each do |n|
+      `[60, 64, 67, 71].each do |n|
       midi n, velocity: 75, sustain: 1.5
       sleep 0.1
     end`,
-      `(60..72).to_a.sample(${complexity}) do |n|
-      midi n, velocity: 60 + rand_i(30)
+      `${complexity}.times do
+      midi 60 + rand_i(24), velocity: 60 + rand_i(30), sustain: 0.3
       sleep rrand(0.1, 0.5)
     end`
     ]
-    
     return patterns[index % patterns.length]
   }
-  
+
   const downloadCode = () => {
     const blob = new Blob([generatedCode], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -255,7 +260,7 @@ end`
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8">
       <div className="max-w-7xl mx-auto">
@@ -267,13 +272,13 @@ end`
             Integrated Composition System for Mathematics, Physics, Music History, and Art
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6">
             <h3 className="text-xl font-bold text-white mb-4">Mathematical System</h3>
             <select
               value={parameters.mathSystem}
-              onChange={(e) => setParameters({...parameters, mathSystem: e.target.value})}
+              onChange={(e) => setParameters({ ...parameters, mathSystem: e.target.value })}
               className="w-full bg-white bg-opacity-20 text-white rounded px-4 py-2 mb-4"
             >
               {mathSystems.map(sys => (
@@ -286,12 +291,12 @@ end`
               {mathSystems.find(s => s.id === parameters.mathSystem)?.description}
             </p>
           </div>
-          
+
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6">
             <h3 className="text-xl font-bold text-white mb-4">Physics Effect</h3>
             <select
               value={parameters.physicsEffect}
-              onChange={(e) => setParameters({...parameters, physicsEffect: e.target.value})}
+              onChange={(e) => setParameters({ ...parameters, physicsEffect: e.target.value })}
               className="w-full bg-white bg-opacity-20 text-white rounded px-4 py-2 mb-4"
             >
               {physicsEffects.map(eff => (
@@ -304,12 +309,12 @@ end`
               {physicsEffects.find(e => e.id === parameters.physicsEffect)?.description}
             </p>
           </div>
-          
+
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6">
             <h3 className="text-xl font-bold text-white mb-4">Historical Form</h3>
             <select
               value={parameters.historicalForm}
-              onChange={(e) => setParameters({...parameters, historicalForm: e.target.value})}
+              onChange={(e) => setParameters({ ...parameters, historicalForm: e.target.value })}
               className="w-full bg-white bg-opacity-20 text-white rounded px-4 py-2 mb-4"
             >
               {historicalForms.map(form => (
@@ -322,12 +327,12 @@ end`
               {historicalForms.find(f => f.id === parameters.historicalForm)?.description}
             </p>
           </div>
-          
+
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6">
             <h3 className="text-xl font-bold text-white mb-4">Art Movement</h3>
             <select
               value={parameters.artMovement}
-              onChange={(e) => setParameters({...parameters, artMovement: e.target.value})}
+              onChange={(e) => setParameters({ ...parameters, artMovement: e.target.value })}
               className="w-full bg-white bg-opacity-20 text-white rounded px-4 py-2 mb-4"
             >
               {artMovements.map(art => (
@@ -341,10 +346,9 @@ end`
             </p>
           </div>
         </div>
-        
+
         <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6 mb-8">
           <h3 className="text-xl font-bold text-white mb-4">Parameters</h3>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-white mb-2">Tempo (BPM)</label>
@@ -353,12 +357,12 @@ end`
                 min="60"
                 max="180"
                 value={parameters.tempo}
-                onChange={(e) => setParameters({...parameters, tempo: parseInt(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, tempo: parseInt(e.target.value) })}
                 className="w-full"
               />
               <div className="text-center text-white mt-2">{parameters.tempo}</div>
             </div>
-            
+
             <div>
               <label className="block text-white mb-2">Complexity (1-10)</label>
               <input
@@ -366,12 +370,12 @@ end`
                 min="1"
                 max="10"
                 value={parameters.complexity}
-                onChange={(e) => setParameters({...parameters, complexity: parseInt(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, complexity: parseInt(e.target.value) })}
                 className="w-full"
               />
               <div className="text-center text-white mt-2">{parameters.complexity}</div>
             </div>
-            
+
             <div>
               <label className="block text-white mb-2">MIDI Channels</label>
               <input
@@ -379,15 +383,15 @@ end`
                 min="1"
                 max="16"
                 value={parameters.channels}
-                onChange={(e) => setParameters({...parameters, channels: parseInt(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, channels: parseInt(e.target.value) })}
                 className="w-full"
               />
               <div className="text-center text-white mt-2">{parameters.channels}</div>
             </div>
           </div>
         </div>
-        
-        <div className="flex justify-center gap-4 mb-8">
+
+        <div className="flex justify-center gap-4 mb-8 flex-wrap">
           <button
             onClick={generateCode}
             disabled={isGenerating}
@@ -405,18 +409,26 @@ end`
               </>
             )}
           </button>
-          
+
           {generatedCode && (
             <button
               onClick={downloadCode}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-lg font-bold text-lg flex items-center gap-2 hover:from-blue-600 hover:to-cyan-600 transition-all"
             >
               <Download />
-              Download
+              Download .rb
             </button>
           )}
+
+          <button
+            onClick={openMermaidGenerator}
+            className="bg-gradient-to-r from-violet-600 to-purple-700 text-white px-8 py-4 rounded-lg font-bold text-lg flex items-center gap-2 hover:from-violet-700 hover:to-purple-800 transition-all border border-violet-400/30"
+          >
+            <ExternalLink size={20} />
+            Mermaid Score Generator
+          </button>
         </div>
-        
+
         {visualFeedback.length > 0 && (
           <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6 mb-8">
             <h3 className="text-xl font-bold text-white mb-4">Generation Process</h3>
@@ -430,10 +442,19 @@ end`
             </div>
           </div>
         )}
-        
+
         {generatedCode && (
           <div className="bg-black bg-opacity-50 backdrop-blur-lg rounded-lg p-6">
-            <h3 className="text-xl font-bold text-white mb-4">Generated Sonic Pi Code</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">Generated Sonic Pi Code</h3>
+              <button
+                onClick={openMermaidGenerator}
+                className="text-sm text-violet-300 hover:text-violet-200 flex items-center gap-1 border border-violet-700/50 rounded px-3 py-1 transition-colors"
+              >
+                <ExternalLink size={14} />
+                Open in Mermaid Generator
+              </button>
+            </div>
             <pre className="text-green-300 text-sm overflow-x-auto whitespace-pre-wrap">
               {generatedCode}
             </pre>
