@@ -348,7 +348,7 @@
                 <div class="text-sm text-slate-200 font-semibold mb-1">{{ metadata && metadata.title ? metadata.title : 'Algorhythmic Synthesis' }}</div>
                 <div class="text-xs text-slate-400">
                   {{ selectedDiagramName }} diagram · {{ mermaidCode.split('\n').length }} lines ·
-                  {{ (new Blob([mermaidCode]).size / 1024).toFixed(1) }} KB
+                  {{ mermaidSizeKb }} KB
                 </div>
               </div>
             </div>
@@ -538,6 +538,12 @@ end`
           return dt ? dt.name : selectedDiagram.value
         })
 
+        const mermaidSizeKb = computed(() => {
+          if (!mermaidCode.value) return '0.0'
+          const byteLength = new TextEncoder().encode(mermaidCode.value).length
+          return (byteLength / 1024).toFixed(1)
+        })
+
         function loadExample() {
           sonicPiCode.value = exampleCode
           triggerValidation()
@@ -639,6 +645,7 @@ end`
           metadata,
           selectedDiagram,
           selectedDiagramName,
+          mermaidSizeKb,
           activeTab,
           includeMetadata,
           diagramTypes,
