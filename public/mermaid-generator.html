@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mermaid Score Generator — Algorhythmic Synthesis</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Playfair Display', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+          colors: {
+            void: '#050508',
+            ink: '#0d0d14',
+            panel: '#111118',
+            rim: '#1e1e2e',
+            accent: '#7c3aed',
+            glow: '#a855f7',
+            teal: '#14b8a6',
+            ember: '#f59e0b',
+          },
+          animation: {
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'fade-up': 'fadeUp 0.4s ease forwards',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%,100%': { boxShadow: '0 0 8px rgba(124,58,237,0.4)' },
+              '50%': { boxShadow: '0 0 24px rgba(168,85,247,0.7)' },
+            },
+            fadeUp: {
+              from: { opacity: '0', transform: 'translateY(12px)' },
+              to: { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: #050508; color: #e2e8f0; }
+    body { font-family: 'JetBrains Mono', monospace; margin: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0d0d14; }
+    ::-webkit-scrollbar-thumb { background: #3b1d8a; border-radius: 3px; }
+    .glass {
+      background: rgba(17, 17, 24, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+    .label-glow { text-shadow: 0 0 20px rgba(168, 85, 247, 0.6); }
+    .code-area {
+      background: #0a0a10;
+      border: 1px solid #2d1b6e;
+      resize: vertical;
+      caret-color: #a855f7;
+    }
+    .code-area:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #6d28d9, #7c3aed);
+      border: 1px solid #8b5cf6;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #7c3aed, #9333ea);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-teal {
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      border: 1px solid #2dd4bf;
+      transition: all 0.2s ease;
+    }
+    .btn-teal:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(20, 184, 166, 0.5);
+      transform: translateY(-1px);
+    }
+    .mermaid-output {
+      background: #060609;
+      border: 1px solid #1e1b4b;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+    .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+    .htmx-request.htmx-indicator { opacity: 1; }
+    .tab-active {
+      border-bottom: 2px solid #a855f7;
+      color: #e9d5ff;
+    }
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+
+<body class="min-h-screen" style="background: #050508;">
+
+  <div
+    x-data="{
+      toasts: [],
+      addToast(msg, type) {
+        const id = Date.now();
+        this.toasts.push({ id, msg, type });
+        setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id) }, 3200);
+      }
+    }"
+    x-on:show-toast.window="addToast($event.detail.msg, $event.detail.type)"
+    class="fixed top-4 right-4 z-50 flex flex-col gap-2"
+    style="pointer-events: none;"
+    x-cloak
+  >
+    <template x-for="t in toasts" :key="t.id">
+      <div
+        x-show="true"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-8"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        :class="t.type === 'success' ? 'border-teal-500 bg-teal-950' : 'border-red-500 bg-red-950'"
+        class="glass rounded-lg px-4 py-3 text-xs font-mono border flex items-center gap-2 min-w-48"
+        style="pointer-events: auto;"
+      >
+        <span :class="t.type === 'success' ? 'text-teal-400' : 'text-red-400'" x-text="t.type === 'success' ? '✓' : '✕'"></span>
+        <span class="text-slate-200" x-text="t.msg"></span>
+      </div>
+    </template>
+  </div>
+
+  <header class="sticky top-0 z-40 border-b border-violet-900/40" style="background: rgba(5,5,8,0.92); backdrop-filter: blur(20px);">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a
+          href="/"
+          class="text-violet-400 hover:text-violet-300 transition-colors text-sm flex items-center gap-1"
+          _="on click add .opacity-50 to me"
+        >
+          ← Generator
+        </a>
+        <span class="text-violet-900/60">|</span>
+        <span class="font-display text-violet-300 text-lg italic label-glow">Mermaid Score Generator</span>
+      </div>
+      <div class="flex items-center gap-3 text-xs text-slate-500">
+        <span class="text-violet-600">Vue.js</span>
+        <span>·</span>
+        <span class="text-teal-600">HTMX</span>
+        <span>·</span>
+        <span class="text-amber-600">Alpine.js</span>
+        <span>·</span>
+        <span class="text-pink-600">Hyperscript</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="vue-app" class="max-w-7xl mx-auto px-6 py-8">
+
+    <div class="mb-8 text-center">
+      <h1 class="font-display text-4xl font-bold text-white label-glow mb-2">
+        Sonic Pi → Mermaid Notation
+      </h1>
+      <p class="text-slate-400 text-sm max-w-xl mx-auto">
+        Paste generated Sonic Pi code below. Select a diagram type and generate a downloadable <code class="text-violet-400">.mmd</code> score.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="flex flex-col gap-4">
+
+        <div class="glass rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-xs text-violet-300 uppercase tracking-widest">Sonic Pi Code</label>
+            <button
+              @click="loadExample"
+              class="text-xs text-amber-400 hover:text-amber-300 transition-colors border border-amber-900/50 rounded px-2 py-1"
+              _="on click add .scale-95 to me then wait 150ms then remove .scale-95 from me"
+            >
+              Load Example
+            </button>
+          </div>
+          <textarea
+            v-model="sonicPiCode"
+            @input="triggerValidation"
+            class="code-area w-full rounded-lg p-4 text-emerald-300 text-xs leading-relaxed"
+            rows="18"
+            placeholder="# Paste your Sonic Pi code here...&#10;&#10;use_bpm 89&#10;&#10;live_loop :fibonacci_organum do&#10;  use_midi_defaults channel: 1&#10;  ..."
+            spellcheck="false"
+          ></textarea>
+        </div>
+
+        <div class="glass rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs text-teal-400 uppercase tracking-widest">Live Validation</span>
+            <span class="text-xs text-slate-600">(HTMX)</span>
+            <span id="htmx-spinner" class="htmx-indicator ml-auto">
+              <span class="inline-block w-3 h-3 border border-teal-500 border-t-transparent rounded-full animate-spin"></span>
+            </span>
+          </div>
+          <div
+            id="htmx-validation-result"
+            class="text-xs text-slate-500 min-h-10"
+          >Paste code above to validate.</div>
+        </div>
+
+      </div>
+
+      <div class="flex flex-col gap-4">
+
+        <div class="glass rounded-xl p-5">
+          <label class="text-xs text-violet-300 uppercase tracking-widest block mb-3">Diagram Type</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              v-for="dt in diagramTypes"
+              :key="dt.id"
+              @click="selectedDiagram = dt.id"
+              :class="selectedDiagram === dt.id
+                ? 'border-violet-500 bg-violet-900/40 text-violet-200'
+                : 'border-slate-700 bg-slate-900/40 text-slate-400 hover:border-slate-600'"
+              class="rounded-lg border p-3 text-left transition-all duration-150"
+            >
+              <div class="text-sm font-semibold">{{ dt.name }}</div>
+              <div class="text-xs opacity-60 mt-0.5">{{ dt.desc }}</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-violet-300 uppercase tracking-widest">Options</span>
+          </div>
+          <label class="flex items-center gap-3 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="includeMetadata"
+              class="w-4 h-4 accent-violet-500"
+            />
+            Prepend metadata header comment
+          </label>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="generate"
+            :disabled="isGenerating || !sonicPiCode.trim()"
+            class="btn-primary flex-1 text-white rounded-xl py-3 px-6 font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            <span v-if="isGenerating" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>{{ isGenerating ? 'Generating…' : 'Generate .mmd' }}</span>
+          </button>
+        </div>
+
+        <div v-if="errorMessage" class="glass rounded-xl p-4 border-red-800/60 bg-red-950/30">
+          <p class="text-red-400 text-xs">{{ errorMessage }}</p>
+        </div>
+
+        <div v-if="metadata" class="glass rounded-xl p-4 animate-fade-up">
+          <div class="text-xs text-violet-300 uppercase tracking-widest mb-3">Generation Result</div>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div class="text-2xl font-bold text-emerald-400">{{ metadata.voiceCount }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">voices</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-violet-400">{{ metadata.bpm }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">BPM</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-teal-400">{{ metadata.defines }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">functions</div>
+            </div>
+          </div>
+          <div v-if="metadata.categories && metadata.categories.length" class="mt-3 flex flex-wrap gap-1">
+            <span
+              v-for="cat in metadata.categories"
+              :key="cat"
+              class="text-xs px-2 py-0.5 rounded-full bg-violet-900/50 border border-violet-700/40 text-violet-300"
+            >{{ cat }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div v-if="mermaidCode" class="mt-8 animate-fade-up">
+      <div class="glass rounded-xl overflow-hidden">
+
+        <div class="flex items-center justify-between px-6 py-3 border-b border-violet-900/40">
+          <div class="flex gap-4">
+            <button
+              @click="activeTab = 'preview'"
+              :class="activeTab === 'preview' ? 'tab-active text-violet-200' : 'text-slate-500 hover:text-slate-300'"
+              class="text-sm pb-0.5 transition-colors"
+            >Preview</button>
+            <button
+              @click="activeTab = 'source'"
+              :class="activeTab === 'source' ? 'tab-active text-violet-200' : 'text-slate-500 hover:text-slate-300'"
+              class="text-sm pb-0.5 transition-colors"
+            >Source (.mmd)</button>
+          </div>
+          <div class="flex gap-2">
+            <button
+              id="copy-btn"
+              class="btn-teal text-white text-xs rounded-lg px-3 py-1.5 font-semibold"
+              _="on click
+                   js(me) navigator.clipboard.writeText(document.getElementById('mermaid-source-code').textContent) end
+                   put 'Copied!' into me
+                   wait 2s
+                   put 'Copy' into me"
+            >Copy</button>
+            <button
+              id="download-btn"
+              class="btn-primary text-white text-xs rounded-lg px-3 py-1.5 font-semibold"
+              _="on click call downloadMmd()"
+            >Download .mmd</button>
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'preview'" class="p-6">
+          <div class="text-xs text-slate-500 mb-4">
+            Render this diagram at
+            <a href="https://mermaid.live" target="_blank" class="text-violet-400 hover:text-violet-300 underline">mermaid.live</a>
+            or embed in any Markdown renderer.
+          </div>
+          <div class="bg-slate-900/60 rounded-lg p-4 border border-slate-800">
+            <div class="flex items-start gap-3">
+              <div class="text-violet-400 text-lg mt-0.5">◈</div>
+              <div>
+                <div class="text-sm text-slate-200 font-semibold mb-1">{{ metadata && metadata.title ? metadata.title : 'Algorhythmic Synthesis' }}</div>
+                <div class="text-xs text-slate-400">
+                  {{ selectedDiagramName }} diagram · {{ mermaidCode.split('\n').length }} lines ·
+                  {{ (new Blob([mermaidCode]).size / 1024).toFixed(1) }} KB
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-slate-800/60 rounded px-3 py-2">
+                <span class="text-slate-500">voices</span>
+                <span class="float-right text-emerald-400 font-mono">{{ metadata ? metadata.voiceCount : '—' }}</span>
+              </div>
+              <div class="bg-slate-800/60 rounded px-3 py-2">
+                <span class="text-slate-500">diagram</span>
+                <span class="float-right text-violet-400 font-mono">{{ selectedDiagram }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 p-3 bg-amber-950/30 border border-amber-900/40 rounded-lg text-xs text-amber-300">
+            Tip: Open <a href="https://mermaid.live" target="_blank" class="underline hover:text-amber-200">mermaid.live</a>,
+            paste the source, and export as SVG/PNG for high-resolution scores.
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'source'" class="p-6">
+          <pre
+            id="mermaid-source-code"
+            class="mermaid-output rounded-xl p-5 overflow-x-auto text-emerald-300 whitespace-pre leading-relaxed"
+          >{{ mermaidCode }}</pre>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="mt-12 glass rounded-xl p-6">
+      <div class="text-xs text-slate-500 uppercase tracking-widest mb-4">Technology Stack</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+        <div class="border border-violet-900/40 rounded-lg p-3">
+          <div class="text-violet-400 font-bold mb-1">Vue.js 3</div>
+          <div class="text-slate-500">Reactive state, generation logic, result display</div>
+        </div>
+        <div class="border border-teal-900/40 rounded-lg p-3">
+          <div class="text-teal-400 font-bold mb-1">HTMX 1.9</div>
+          <div class="text-slate-500">Live code validation panel with server HTML injection</div>
+        </div>
+        <div class="border border-amber-900/40 rounded-lg p-3">
+          <div class="text-amber-400 font-bold mb-1">Alpine.js 3</div>
+          <div class="text-slate-500">Toast notifications via custom window events</div>
+        </div>
+        <div class="border border-pink-900/40 rounded-lg p-3">
+          <div class="text-pink-400 font-bold mb-1">Hyperscript</div>
+          <div class="text-slate-500">Copy-to-clipboard and .mmd file download</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let htmxValidationTimer = null
+
+    const { createApp, ref, computed } = Vue
+
+    const exampleCode = `# ==============================================================================
+# ALGORHYTHMIC SYNTHESIS - Example
+# ==============================================================================
+
+use_debug false
+use_midi_logging false
+use_bpm 89
+
+define :fibonacci do |n|
+  fib = [1, 1]
+  (n - 2).times { fib << (fib[-1] + fib[-2]) }
+  fib
+end
+
+define :fugue_subject do |root|
+  [root, root+2, root+4, root+7, root+11, root+9, root+7]
+end
+
+define :doppler_shift do |frequency, velocity|
+  frequency * (343.0 / (343.0 + velocity))
+end
+
+live_loop :fibonacci_organum do
+  use_real_time
+  use_midi_defaults channel: 1
+  with_fx :reverb, room: 0.8, mix: 0.4 do
+    with_fx :lpf, cutoff: 100 do
+      midi 60, velocity: 80, sustain: 0.5
+      sleep 0.5
+      midi 64, velocity: 75, sustain: 0.5
+      sleep 0.5
+    end
+  end
+  sleep 4
+end
+
+live_loop :chaos_voice do
+  use_real_time
+  use_midi_defaults channel: 2
+  with_fx :echo, phase: 0.375, decay: 4 do
+    with_fx :distortion, distort: 0.3 do
+      midi 48, velocity: 70, sustain: 0.15
+      sleep 0.125
+    end
+  end
+end
+
+live_loop :serial_fugue do
+  use_real_time
+  use_midi_defaults channel: 3
+  with_fx :reverb, room: 0.9, mix: 0.5 do
+    midi 60, velocity: 80, sustain: 0.4
+    sleep 0.5
+    midi 62, velocity: 75, sustain: 0.4
+    sleep 0.5
+  end
+end
+
+live_loop :spectral_physics do
+  use_real_time
+  use_midi_defaults channel: 5
+  with_fx :reverb, room: 0.95, mix: 0.6 do
+    with_fx :echo, phase: 0.5, decay: 6 do
+      midi 36, velocity: 60, sustain: 4
+      sleep 4
+    end
+  end
+end
+
+live_loop :poetry_voice do
+  use_real_time
+  use_midi_defaults channel: 9
+  with_fx :echo, phase: 0.75 do
+    midi 55, velocity: 65, sustain: 0.8
+    sleep 0.8
+  end
+end
+
+live_loop :dance_motion do
+  use_real_time
+  use_midi_defaults channel: 11
+  midi 60, velocity: 75, sustain: 0.2
+  sleep 0.25
+end
+
+live_loop :comedy_rhythm do
+  use_real_time
+  use_midi_defaults channel: 12
+  with_fx :distortion, distort: 0.2 do
+    midi 48, velocity: 70, sustain: 1.0
+    sleep 1
+  end
+end
+
+live_loop :graphic_interpretation do
+  use_real_time
+  use_midi_defaults channel: 16
+  with_fx :reverb, room: 0.95, mix: 0.7 do
+    midi 60, velocity: 60, sustain: 0.15
+    sleep 0.125
+    midi 72, velocity: 100, sustain: 0.05
+    sleep 0.25
+    midi 48, velocity: 60, sustain: 2
+    sleep 2
+  end
+end`
+
+    const app = createApp({
+      setup() {
+        const sonicPiCode = ref('')
+        const mermaidCode = ref('')
+        const isGenerating = ref(false)
+        const errorMessage = ref('')
+        const metadata = ref(null)
+        const selectedDiagram = ref('flowchart')
+        const activeTab = ref('source')
+        const includeMetadata = ref(true)
+
+        const diagramTypes = [
+          { id: 'flowchart', name: 'Flowchart', desc: 'System architecture' },
+          { id: 'sequence', name: 'Sequence', desc: 'Voice interactions' },
+          { id: 'gantt', name: 'Gantt', desc: 'Rhythmic timeline' },
+          { id: 'mindmap', name: 'Mind Map', desc: 'Structural overview' },
+        ]
+
+        const selectedDiagramName = computed(() => {
+          const dt = diagramTypes.find(d => d.id === selectedDiagram.value)
+          return dt ? dt.name : selectedDiagram.value
+        })
+
+        function loadExample() {
+          sonicPiCode.value = exampleCode
+          triggerValidation()
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { msg: 'Example code loaded', type: 'success' }
+          }))
+        }
+
+        function triggerValidation() {
+          if (htmxValidationTimer) clearTimeout(htmxValidationTimer)
+          htmxValidationTimer = setTimeout(() => {
+            const code = sonicPiCode.value.trim()
+            if (code.length < 10) {
+              document.getElementById('htmx-validation-result').innerHTML =
+                '<span class="text-slate-600">Paste code above to validate.</span>'
+              return
+            }
+            htmx.ajax('POST', '/api/validate-sonic-pi', {
+              values: { code },
+              target: '#htmx-validation-result',
+              swap: 'innerHTML',
+              indicator: '#htmx-spinner',
+            })
+          }, 700)
+        }
+
+        async function generate() {
+          const code = sonicPiCode.value.trim()
+          if (!code) return
+
+          isGenerating.value = true
+          errorMessage.value = ''
+          mermaidCode.value = ''
+          metadata.value = null
+
+          try {
+            const res = await fetch('/api/generate-mermaid', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                code,
+                diagramType: selectedDiagram.value,
+              }),
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+              errorMessage.value = data.error || 'Generation failed.'
+              window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { msg: data.error || 'Generation failed', type: 'error' }
+              }))
+              return
+            }
+
+            let output = data.mermaid
+
+            if (includeMetadata.value) {
+              const header = [
+                `%% Algorhythmic Synthesis — Mermaid Score`,
+                `%% Title: ${data.metadata.title}`,
+                `%% BPM: ${data.metadata.bpm}  Voices: ${data.metadata.voiceCount}  Type: ${data.metadata.diagramType}`,
+                `%% Generated: ${new Date().toISOString()}`,
+                `%%`,
+              ].join('\n')
+              output = header + '\n' + output
+            }
+
+            mermaidCode.value = output
+            metadata.value = data.metadata
+            activeTab.value = 'source'
+
+            window.dispatchEvent(new CustomEvent('show-toast', {
+              detail: {
+                msg: `${data.metadata.voiceCount} voices → ${data.metadata.diagramType} ready`,
+                type: 'success'
+              }
+            }))
+
+            setTimeout(() => {
+              document.getElementById('mermaid-source-code')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+            }, 100)
+
+          } catch {
+            errorMessage.value = 'Network error. Please check your connection.'
+            window.dispatchEvent(new CustomEvent('show-toast', {
+              detail: { msg: 'Network error', type: 'error' }
+            }))
+          } finally {
+            isGenerating.value = false
+          }
+        }
+
+        return {
+          sonicPiCode,
+          mermaidCode,
+          isGenerating,
+          errorMessage,
+          metadata,
+          selectedDiagram,
+          selectedDiagramName,
+          activeTab,
+          includeMetadata,
+          diagramTypes,
+          loadExample,
+          triggerValidation,
+          generate,
+        }
+      }
+    })
+
+    app.mount('#vue-app')
+
+    function downloadMmd() {
+      const el = document.getElementById('mermaid-source-code')
+      if (!el) return
+      const content = el.textContent || ''
+      if (!content.trim()) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { msg: 'No content to download', type: 'error' }
+        }))
+        return
+      }
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'algorhythmic-synthesis-score.mmd'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { msg: 'Downloaded algorhythmic-synthesis-score.mmd', type: 'success' }
+      }))
+    }
+
+    window.downloadMmd = downloadMmd
+
+    document.addEventListener('htmx:afterRequest', function(evt) {
+      if (evt.detail.failed) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { msg: 'Validation request failed', type: 'error' }
+        }))
+      }
+    })
+  </script>
+
+</body>
+</html>
